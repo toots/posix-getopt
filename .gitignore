@@ -11,4 +11,4 @@ src/posixGetopt.mldylib
 src/posixGetopt.mllib
 src/posixGetopt.mlpack
 *.sw*
-run.*
+/run.*
