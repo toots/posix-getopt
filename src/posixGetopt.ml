@@ -50,9 +50,12 @@ let reset () =
       _optreset <-@ true;
       _optind <-@ 1
 
-let remaining_argv argv =
-  let argc = Array.length argv in
+let remaining_argv _argv =
+  let argc = CArray.length _argv in
   let optind = min (!@ _optind) argc in
+  let argv =
+    Array.of_list (CArray.to_list _argv)
+  in
   Array.sub argv optind (argc-optind)
 
 let apply_opt c = function
@@ -113,7 +116,7 @@ let getopt argv opts =
       _getopt _argc (CArray.start _argv) _short_opts
     in
     if ret = -1 then
-      remaining_argv argv
+      remaining_argv _argv
     else
      begin
       let c = Char.chr ret in
@@ -137,7 +140,7 @@ type _long_opt
 
 let long_opt : _long_opt structure typ  = structure "long_opt"
 let _name = field long_opt "name" string
-let _has_args = field long_opt "has_args" bool
+let _has_args = field long_opt "has_args" int
 let _flag = field long_opt "flag" (ptr int)
 let _value = field long_opt "value" int
 let () = seal long_opt
@@ -148,8 +151,8 @@ let long_opt_of_opt {name;arg} =
   setf _opt _name long_name;
   let has_args =
     match arg with
-      | `None _ -> false
-      | _ -> true
+      | `None _ -> 0
+      | _ -> 1
   in
   setf _opt _has_args has_args;
   setf _opt _flag (from_voidp int null);
@@ -171,6 +174,9 @@ let getopt_long_generic fn argv opts =
     String.concat ""
       (List.map string_of_long_opt opts)
   in
+  let _short_opts =
+    ":" ^ _short_opts
+  in
   let _long_opts =
     List.map long_opt_of_opt opts
   in
@@ -184,7 +190,7 @@ let getopt_long_generic fn argv opts =
          (CArray.start _long_opts) index
     in
     if ret = -1 then
-      remaining_argv argv
+      remaining_argv _argv
     else
      begin
       let c = Char.chr ret in
