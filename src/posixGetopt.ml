@@ -2,7 +2,7 @@ type short = char
 type long = (string*char)
 
 type arg = [
-  | `Unit     of (unit -> unit)
+  | `None     of (unit -> unit)
   | `Optional of (string option -> unit)
   | `Required of (string -> unit)
 ]
@@ -30,16 +30,33 @@ let _opterr = foreign_value "opterr" bool
 let _optopt = foreign_value "optopt" char
 let _optind = foreign_value "optind" int
 let _optarg = foreign_value "optarg" string
+let _optreset =
+  try
+    Some (foreign_value "optreset" bool)
+  with _ -> None
 
 let print_error flag =
   _opterr <-@ flag
 
+let () =
+  print_error false
+
+let reset () =
+  match _optreset with
+    (* GNU *)
+    | None -> _optind <-@ 0
+    (* Others *)
+    | Some _optreset ->
+      _optreset <-@ true;
+      _optind <-@ 1
+
 let remaining_argv argv =
-  let optind = !@ _optind in
-  Array.sub argv optind ((Array.length argv)-optind)
+  let argc = Array.length argv in
+  let optind = min (!@ _optind) argc in
+  Array.sub argv optind (argc-optind)
 
 let apply_opt c = function
-  | `Unit callback -> callback ()
+  | `None callback -> callback ()
   | `Optional callback ->
      if c = ':' then
       callback None
@@ -51,13 +68,19 @@ let apply_opt c = function
 let check_result c opts select =
   if c = '?' then
     raise (Unknown_option (!@ _optopt));
+  let optopt =
+    if c = ':' then
+      !@ _optopt
+    else
+      c
+  in
   let opt =
-    List.find select opts
+    List.find (select optopt) opts
   in
   if c = ':' then
    begin
     match opt.arg with
-      | `Unit _ -> assert false
+      | `None _ -> assert false
       | `Optional _ -> ()
       | `Required _ -> raise (Missing_argument (!@ _optopt)) 
    end;
@@ -65,7 +88,7 @@ let check_result c opts select =
 
 let string_of_short_opt {name;arg} =
   let arg = match arg with
-    | `Unit _ -> ""
+    | `None _ -> ""
     | _ -> ":"
   in
   Printf.sprintf "%c%s" name arg
@@ -82,6 +105,9 @@ let getopt argv opts =
     String.concat ""
       (List.map string_of_short_opt opts)
   in
+  let _short_opts =
+    ":" ^ _short_opts
+  in
   let rec f () =
     let ret =
       _getopt _argc (CArray.start _argv) _short_opts
@@ -92,7 +118,7 @@ let getopt argv opts =
      begin
       let c = Char.chr ret in
       let {arg} =
-        check_result c opts (fun {name} -> name = c)
+        check_result c opts (fun c {name} -> name = c)
       in
       apply_opt c arg;
       f ()
@@ -102,7 +128,7 @@ let getopt argv opts =
 
 let string_of_long_opt {name;arg} =
   let arg = match arg with
-    | `Unit _ -> ""
+    | `None _ -> ""
     | _ -> ":"
   in
   Printf.sprintf "%c%s" (snd name) arg
@@ -122,7 +148,7 @@ let long_opt_of_opt {name;arg} =
   setf _opt _name long_name;
   let has_args =
     match arg with
-      | `Unit _ -> false
+      | `None _ -> false
       | _ -> true
   in
   setf _opt _has_args has_args;
@@ -163,7 +189,7 @@ let getopt_long_generic fn argv opts =
      begin
       let c = Char.chr ret in
       let {arg} =
-        check_result c opts (fun {name} -> (snd name) = c)
+        check_result c opts (fun c {name} -> (snd name) = c)
       in
       apply_opt c arg;
       f ()

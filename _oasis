@@ -1,7 +1,7 @@
 OASISFormat:  0.4
 Name:         posix-getopt
 Version:      0.1.0
-Synopsis:     POSIX/GNU getopt API
+Synopsis:     GNU/POSIX getopt API
 Authors:      Romain Beauxis <toots@rastageeks.org>
 Homepage:     https://github.com/toots/posix-getopt
 License:      WTFPL
@@ -14,3 +14,16 @@ Library posixGetopt
   Pack:            false
   Modules:         PosixGetopt
   FindlibName:     posix-getopt
+
+Executable test
+  Path: test
+  MainIs: run.ml
+  Build$: flag(tests)
+  BuildDepends: posix-getopt, oUnit
+  Install: false
+
+Test test
+  Run$: flag(tests)
+  TestTools: test
+  Command: $test
+  WorkingDirectory: test
