@@ -1,7 +1,7 @@
 OASISFormat:  0.4
 Name:         posix-getopt
 Version:      0.1.0
-Synopsis:     GNU/POSIX getopt API
+Synopsis:     POSIX getopt API
 Authors:      Romain Beauxis <toots@rastageeks.org>
 Homepage:     https://github.com/toots/posix-getopt
 License:      WTFPL
