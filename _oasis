@@ -1,0 +1,16 @@
+OASISFormat:  0.4
+Name:         posix-getopt
+Version:      0.1.0
+Synopsis:     POSIX/GNU getopt API
+Authors:      Romain Beauxis <toots@rastageeks.org>
+Homepage:     https://github.com/toots/posix-getopt
+License:      WTFPL
+Plugins:      META (0.4), DevFiles (0.4)
+BuildTools:   ocamlbuild
+BuildDepends: ctypes, ctypes.foreign
+
+Library posixGetopt
+  Path:            src
+  Pack:            false
+  Modules:         PosixGetopt
+  FindlibName:     posix-getopt

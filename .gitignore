@@ -1,0 +1,12 @@
+Makefile
+_tags
+_build/
+configure
+myocamlbuild.ml
+setup.data
+setup.log
+setup.ml
+src/META
+src/posixGetopt.mldylib
+src/posixGetopt.mllib
+src/posixGetopt.mlpack
