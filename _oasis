@@ -19,7 +19,7 @@ Executable test
   Path: test
   MainIs: run.ml
   Build$: flag(tests)
-  BuildDepends: posix-getopt, oUnit
+  BuildDepends: extunix, posix-getopt, oUnit
   Install: false
 
 Test test

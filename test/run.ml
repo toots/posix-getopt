@@ -1,6 +1,9 @@
 open OUnit2
 open PosixGetopt
 
+let sysname =
+  (ExtUnix.All.uname ()).ExtUnix.All.Uname.sysname
+
 let test_short_flag _ =
   reset ();
   let argv = [|"progname";"-b"|] in
@@ -74,6 +77,7 @@ let test_short_required_no_arg _ =
   assert !test
 
 let test_long_required_no_long_arg _ =
+  skip_if (sysname = "Darwin") "Doesn't work on OSX";
   reset ();
   let argv = [|"progname";"--bla"|] in
   let opt = {
@@ -146,6 +150,7 @@ let test_remaining_arg _ =
   assert_equal [|"-b"|] ret
 
 let test_permuted_remaining_arg _ =
+  skip_if (sysname = "Darwin") "Doesn't work on OSX";
   reset ();
   let argv = [|"progname";"bla";"-b"|] in
   let opt = {
@@ -155,6 +160,40 @@ let test_permuted_remaining_arg _ =
   let ret =
     getopt argv [opt]
   in
+  assert_equal [|"bla"|] ret
+
+let test_complex_scenario _ =
+  reset ();
+  let argv = [|"progname";"-a";"-cret";"-bopt";"--gno";"gna";"--foo";"--foo";"--";"bla"|] in
+  let a = ref false in
+  let b = ref "" in
+  let c = ref (Some "value") in
+  let gno = ref "" in
+  let foo = ref false in
+  let opts = [{
+    name = ("aa",'a');
+    arg = `None (fun () -> a := true)
+  };{
+    name = ("bb",'b');
+    arg = `Required (fun v -> b := v)
+  };{
+    name = ("cc",'c');
+    arg = `Optional (fun v -> c := v)
+  };{
+    name = ("gno",'g');
+    arg = `Required (fun v -> gno := v)
+  };{
+    name = ("foo",'f');
+    arg = `None (fun () -> foo := true)
+  }] in
+  let ret =
+    getopt_long argv opts
+  in
+  assert !a;
+  assert_equal "opt" !b;
+  assert_equal (Some "ret") !c;
+  assert_equal "gna" !gno;
+  assert_equal true !foo;
   assert_equal [|"bla"|] ret
 
 let suite =
@@ -169,7 +208,8 @@ let suite =
     "test_short_optional_no_arg">::test_short_optional_no_arg;
     "test_short_optional_arg">::test_short_optional_arg;
     "test_remaining_arg">::test_remaining_arg;
-    "test_permuted_remaining_arg">::test_permuted_remaining_arg]
+    "test_permuted_remaining_arg">::test_permuted_remaining_arg;
+    "test_complex_scenario">::test_complex_scenario]
 
 let () =
   run_test_tt_main suite
